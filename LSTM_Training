@@ -1,0 +1,25 @@
+
+# 1. 利用JTessBoxEditor 将多张图片合并为tif文件
+
+# 2. 利用tesseract lstmbox命令根据上面的tif制作box文件  --psm 6  精度较好
+tesseract imageFile boxFile -l bootstrapLang --psm 6 batch.nochop lstmbox
+然后用JTessBoxEditor打开进行矫正后保存
+
+# 3. 利用.tif和.box文件，生成.lstmf文件用于lstm训练
+tesseract num.tif num -l eng --psm 6 lstm.train
+
+# 4. 从官方的.traineddata(某个指定语言 例如 eng.traineddata)文件中提取.lstm文件
+combine_tessdata -e eng.traineddata eng.lstm
+
+# 5. 创建 num.training.file.txt
+里面存放第3步得到的 .lstmf文件全路径
+
+# 6. 训练（基于某个原始训练数据.lstm）
+lstmtraining --model_output="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\output" --continue_from="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\eng.lstm"  --train_listfile="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\num.training.file.txt" --traineddata="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\eng.traineddata" --debug_interval -1 --max_iterations 2000 
+
+# 7. 合并最终数据
+lstmtraining --stop_training --continue_from="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\output_checkpoint" --traineddata="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\eng.traineddata" --model_output="D:\Projects\SELF\Github\tesseract\jTessBoxEditorCY\test\pic4\train\output\num.traineddata"
+
+
+# 8. 测试
+tesseract "xxx.png" test -l num
